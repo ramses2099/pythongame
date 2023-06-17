@@ -10,6 +10,15 @@ dt = 0
 
 player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
 
+
+class Point:
+    def __init__(self):
+        self.x = 10
+
+
+p = Point()
+print(f"{p.x}")
+
 while running:
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
