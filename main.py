@@ -15,25 +15,41 @@ WHITE = (255, 255, 255)
 DISTANCE = 100
 
 
-class Particle:
-    def __init__(self, x, y, vx, vy, color):
-        self.x = x
-        self.y = y
-        self.vx = vx
-        self.vy = vy
+class Box:
+    def __init__(self, x, y, color):
+        self.mass = 10
+        self.w, self.h = 32, 32
         self.color = color
-        self.radius = random.random() * math.pi * 6
+        self.rect = pygame.rect.Rect(x, y, self.w, self.h)
+        self.position = pygame.math.Vector2(x, y)
+        self.velocity = pygame.math.Vector2(0, 0)
+        self.acceleartion = pygame.math.Vector2(0, 0.10)
+
+    def apply_force(self, vec):
+        pass
 
     def draw(self, surface):
-        pygame.draw.circle(surface, self.color, (self.x, self.y), self.radius)
+        pygame.draw.rect(surface, self.color, self.rect, 1)
 
     def update(self, dt):
-        if self.x + self.radius > WINDOW_SIZE[0] or self.x - self.radius < 0:
-            self.vx *= -1
-        if self.y + self.radius > WINDOW_SIZE[1] or self.y - self.radius < 0:
-            self.vy *= -1
-        self.x += self.vx * dt
-        self.y += self.vy * dt
+        # bounding
+        if self.rect.left - self.rect.w < 0 or self.rect.right + self.rect.w > WINDOW_SIZE[0]:
+            self.velocity.x *= -1
+        if self.rect.top - self.rect.h < 0 or self.rect.bottom + self.rect.h > WINDOW_SIZE[1]:
+            self.velocity.y *= -1
+
+        # force
+        self.acceleartion.x = self.acceleartion.x / self.mass
+        self.acceleartion.y = self.acceleartion.y / self.mass
+        # velocity
+        self.velocity.x += self.acceleartion.x * dt
+        self.velocity.y += self.acceleartion.y * dt
+        # position
+        self.position.x += self.velocity.x * dt
+        self.position.y += self.velocity.y * dt
+        # pygame rect
+        self.rect.x += self.position.x
+        self.rect.y += self.position.y
 
 
 class App:
@@ -45,9 +61,8 @@ class App:
         self.clock = pygame.time.Clock()
         self.running = True
         self.dt = 0
-        self.arry_particle = []
-        self.numberofparticle = 200
-        self.init_particle()  # init all particle
+        self.objets = []
+        self.init_object()
 
     def random_color(self) -> tuple[int, int, int]:
         r = random.random() * 255
@@ -55,27 +70,10 @@ class App:
         b = random.random() * 255
         return (int(r), int(g), int(b))
 
-    def init_particle(self):
-        for i in range(self.numberofparticle):
-            x = random.random() * WINDOW_SIZE[0]
-            y = random.random() * WINDOW_SIZE[1]
-            vx = random.random() * 5
-            vy = random.random() * 7
-            p = Particle(x, y, vx, vy, self.random_color())
-            self.arry_particle.append(p)
-
-    def connect_particle(self):
-        for i in range(len(self.arry_particle)):
-            for j in range((i + 1), len(self.arry_particle)):
-                dx = self.arry_particle[i].x - self.arry_particle[j].x
-                dy = self.arry_particle[i].y - self.arry_particle[j].y
-                d = math.hypot(dx, dy)
-                if d < DISTANCE:
-                    p1x = self.arry_particle[i].x
-                    p1y = self.arry_particle[i].y
-                    p2x = self.arry_particle[j].x
-                    p2y = self.arry_particle[j].y
-                    pygame.draw.line(self.screen, WHITE, (p1x, p1y), (p2x, p2y), 2)
+    def init_object(self):
+        c = self.random_color()
+        b = Box(25, 25, c)
+        self.objets.append(b)
 
     def run(self):
         while self.running:
@@ -93,14 +91,14 @@ class App:
             self.screen.fill(BLACK)
 
             # update
-            for particle in self.arry_particle:
-                particle.update(self.dt)
 
             # draw
-            for particle in self.arry_particle:
-                particle.draw(self.screen)
+            for obj in self.objets:
+                obj.update(self.dt)
+                obj.draw(self.screen)
+
             # connect particles
-            self.connect_particle()
+            # self.connect_particle()
 
             # flip() the display to put your work on screen
             pygame.display.flip()
